@@ -1,7 +1,5 @@
 require 'test_helper'
 
-require 'benchmark'
-
 class VariableUnitTest < Minitest::Test
   include Liquid
 
@@ -156,72 +154,7 @@ class VariableUnitTest < Minitest::Test
     assert_equal ['b', 'c'], lookup.lookups
   end
 
-  def test_performance
-    puts "test_performance"
-
-    n = 100_000
-    Benchmark.bm do |x|
-      initial_total_allocated_objects = GC.stat(:total_allocated_objects)
-      x.report("pre alloc w kwargs") { for i in 1..n; OLD_parse_filter_expressions('things', ["greeting: \"world\"", "farewell: 'goodbye'"]); end }
-      puts "allocated_objects: #{GC.stat(:total_allocated_objects) - initial_total_allocated_objects}"
-
-      initial_total_allocated_objects = GC.stat(:total_allocated_objects)
-      x.report("deferred alloc w kwargs") { for i in 1..n; NEW_parse_filter_expressions('things', ["greeting: \"world\"", "farewell: 'goodbye'"]); end }
-      puts "allocated_objects: #{GC.stat(:total_allocated_objects) - initial_total_allocated_objects}"
-
-
-      initial_total_allocated_objects = GC.stat(:total_allocated_objects)
-      x.report("pre alloc wo kwargs") { for i in 1..n; OLD_parse_filter_expressions('things', []); end }
-      puts "allocated_objects: #{GC.stat(:total_allocated_objects) - initial_total_allocated_objects}"
-
-      initial_total_allocated_objects = GC.stat(:total_allocated_objects)
-      x.report("deferred alloc wo kwargs") { for i in 1..n; NEW_parse_filter_expressions('things', []); end }
-      puts "allocated_objects: #{GC.stat(:total_allocated_objects) - initial_total_allocated_objects}"
-
-
-      initial_total_allocated_objects = GC.stat(:total_allocated_objects)
-      x.report("pre alloc w arg") { for i in 1..n; OLD_parse_filter_expressions('image', ["'med'"]); end }
-      puts "allocated_objects: #{GC.stat(:total_allocated_objects) - initial_total_allocated_objects}"
-
-      initial_total_allocated_objects = GC.stat(:total_allocated_objects)
-      x.report("deferred alloc w arg") { for i in 1..n; NEW_parse_filter_expressions('image', ["'med'"]); end }
-      puts "allocated_objects: #{GC.stat(:total_allocated_objects) - initial_total_allocated_objects}"
-    end
-  end
-
   private
-
-  JustTagAttributes = /\A#{TagAttributes}\z/o
-
-  def OLD_parse_filter_expressions(filter_name, unparsed_args)
-    filter_args = []
-    keyword_args = {}
-    unparsed_args.each do |a|
-      if matches = a.match(JustTagAttributes)
-        keyword_args[matches[1]] = Expression.parse(matches[2])
-      else
-        filter_args << Expression.parse(a)
-      end
-    end
-    result = [filter_name, filter_args]
-    result << keyword_args unless keyword_args.empty?
-    result
-  end
-
-  def NEW_parse_filter_expressions(filter_name, unparsed_args)
-    result = [filter_name, []]
-    if unparsed_args.any?
-      unparsed_args.each do |a|
-        if matches = a.match(JustTagAttributes)
-          result << {} unless result[2]
-          result[2][matches[1]] = Expression.parse(matches[2])
-        else
-          result[1] << Expression.parse(a)
-        end
-      end
-    end
-    result
-  end
 
   def create_variable(markup, options = {})
     Variable.new(markup, ParseContext.new(options))
