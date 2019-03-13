@@ -95,14 +95,12 @@ module Liquid
 
     def parse_filter_expressions(filter_name, unparsed_args)
       result = [filter_name, []]
-      if unparsed_args.any?
-        unparsed_args.each do |a|
-          if matches = a.match(JustTagAttributes)
-            result << {} unless result[2]
-            result[2][matches[1]] = Expression.parse(matches[2])
-          else
-            result[1] << Expression.parse(a)
-          end
+      unparsed_args.each do |a|
+        if matches = a.match(JustTagAttributes)
+          result << {} unless result[2]
+          result[2][matches[1]] = Expression.parse(matches[2])
+        else
+          result[1] << Expression.parse(a)
         end
       end
       result
