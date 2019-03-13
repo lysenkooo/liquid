@@ -96,15 +96,14 @@ module Liquid
     def parse_filter_expressions(filter_name, unparsed_args)
       result = [filter_name, []]
       if unparsed_args.any?
-        keyword_args = {}
         unparsed_args.each do |a|
           if matches = a.match(JustTagAttributes)
-            keyword_args[matches[1]] = Expression.parse(matches[2])
+            result << {} unless result[2]
+            result[2][matches[1]] = Expression.parse(matches[2])
           else
             result[1] << Expression.parse(a)
           end
         end
-        result << keyword_args unless keyword_args.empty?
       end
       result
     end
